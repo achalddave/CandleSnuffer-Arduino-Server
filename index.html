@@ -18,11 +18,17 @@
     </style>
 
     <script>
-      var host = location.origin.replace(/^http/, 'ws')
+      var host = location.origin.replace(/^http/, 'ws') + '/android'
       var ws = new WebSocket(host);
       ws.onmessage = function (event) {
         var li = document.createElement('li');
-        li.innerHTML = JSON.parse(event.data);
+        if (Number(event.data) == 0) {
+          li.innerHTML = "Candle is off!";
+        } else if (Number(event.data) == 1){
+          li.innerHTML = "Candle is on!";
+        } else {
+          li.innerHTML = event.data;
+        }
         document.querySelector('#pings').appendChild(li);
       };
     </script>
