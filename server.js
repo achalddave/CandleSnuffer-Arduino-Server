@@ -43,12 +43,17 @@ androidWss.on('connection', function(ws) {
 
 function candleOff() {
   console.log("Turning candle off");
-  setTimeout(function() {
-    candleState = 0;
+  if (candleState == 1) {
+    setTimeout(function() {
+      candleState = 0;
+      sendState();
+    }, Math.random() * 1000);
+    candleState = 2;
     sendState();
-  }, 2000);
-  candleState = 2;
-  sendState();
+  } else {
+    candleState =0;
+    sendState();
+  }
 }
 
 function candleOn() {
@@ -60,7 +65,7 @@ function candleOn() {
 function sendState() {
   if (androidClient) {
     androidClient.send(''+candleState);
-    console.log("Sending state"+candleState);
+    console.log("Sending state "+candleState);
   } else {
     console.log("No client!");
   }
