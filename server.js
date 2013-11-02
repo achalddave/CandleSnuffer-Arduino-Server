@@ -6,22 +6,19 @@ var WebSocketServer = require('ws').Server
 
 app.use(express.static(__dirname + '/'));
 
-// off
-var candleState = 0;
+var candleState = 1;
+var androidClient;
 
 var server = http.createServer(app);
 server.listen(port);
 
 console.log('http server listening on %d', port);
 
-var android_wss = new WebSocketServer({server: server, path: '/android'});
+var androidWss = new WebSocketServer({server: server, path: '/android'});
 console.log('websocket server created');
-android_wss.on('connection', function(ws) {
-  var id = setInterval(function() {
-    ws.send(''+candleState);
-  }, 1000);
-
+androidWss.on('connection', function(ws) {
   console.log('websocket connection open');
+
   ws.on('message', function(message) {
     switch (Number(message)) {
       case 0:
@@ -31,30 +28,40 @@ android_wss.on('connection', function(ws) {
         candleOn();
         break;
       default:
-        console.log("Dunno what do, received message:", message);
+        ws.send("Received unrecognized message:", message);
         break;
     }
-    console.log(message);
   });
 
   ws.on('close', function() {
     console.log('websocket connection close');
-    clearInterval(id);
   });
+
+  androidClient = ws;
+  sendState();
 });
 
 function candleOff() {
   console.log("Turning candle off");
-  if (candleState == 1) {
-    // send candle off signal to hardware
-  }
-  candleState = 0;
+  setTimeout(function() {
+    candleState = 0;
+    sendState();
+  }, 2000);
+  candleState = 2;
+  sendState();
 }
 
 function candleOn() {
   console.log("Turning candle on");
-  if (candleState == 0) {
-    // send candle on signal to hardware
-  }
   candleState = 1;
+  sendState();
+}
+
+function sendState() {
+  if (androidClient) {
+    androidClient.send(''+candleState);
+    console.log("Sending state"+candleState);
+  } else {
+    console.log("No client!");
+  }
 }

@@ -2,14 +2,21 @@
   <head>
     <style>
       body {
-        font-family: "Helvetica Neue", helvetica, arial;
+        font-family: "Segoe UI", "Myriad Pro", "Open Sans", "Helvetica", sans-serif;
         padding: 15px;
+      }
+
+      h1 {
+        font-weight : 200 !important;
+        font-size : 3em;
+        padding : 0 !important;
+        margin : 0 0 20px 0 !important;
       }
 
       ul {
         list-style: none;
         margin: 0;
-        padding: 0;
+        padding-left: 10px;
       }
 
       ul li {
@@ -22,19 +29,25 @@
       var ws = new WebSocket(host);
       ws.onmessage = function (event) {
         var li = document.createElement('li');
-        if (Number(event.data) == 0) {
-          li.innerHTML = "Candle is off!";
-        } else if (Number(event.data) == 1){
-          li.innerHTML = "Candle is on!";
-        } else {
-          li.innerHTML = event.data;
-        }
-        document.querySelector('#pings').appendChild(li);
+        switch(Number(event.data)) {
+           case 0:
+             li.innerHTML = "The candle is off.";
+             break;
+           case 1:
+             li.innerHTML = "The candle is on.";
+             break;
+           case 2:
+             li.innerHTML = "Trying to turn the candle off...";
+             break;
+           default:
+             break;
+        };
+        document.querySelector('#candle_state').appendChild(li);
       };
     </script>
   </head>
   <body>
-    <h1>Pings</h1>
-    <ul id='pings'></ul>
+    <h1>The candle</h1>
+    <ul id='candle_state'></ul>
   </body>
 </html>
