@@ -4,15 +4,40 @@ var WebSocketServer = require('ws').Server
   , app = express()
   , port = process.env.PORT || 5000;
 
+app.use(express.bodyParser());
 app.use(express.static(__dirname + '/'));
 
 var candleState = 1;
 var androidClient;
 
+// hack for websockets
+// github.com/einaros/ws/blob/8743aab3a2454701017d1a72712ddba6de6ffe44/examples/serverstats-express_3/server.js
 var server = http.createServer(app);
 server.listen(port);
 
 console.log('http server listening on %d', port);
+
+app.get('/arduino', function(req, res) {
+  res.set('Content-Type', 'text');
+  res.send(''+candleState);
+});
+
+app.post('/arduino', function(req, res) {
+  if (! req.body || ! req.body.state) {
+    switch (Number(req.body.state)) {
+      case 0:
+        candleOff();
+        break;
+      case 1:
+        candleOn();
+        break;
+      default:
+        console.log("Received unrecognized message:", req.body.state);
+        break;
+    }
+  }
+  res.end();
+});
 
 var androidWss = new WebSocketServer({server: server, path: '/android'});
 console.log('websocket server created');
