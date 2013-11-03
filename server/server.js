@@ -4,7 +4,8 @@ var WebSocketServer = require('ws').Server
   , app = express()
   , port = process.env.PORT || 5000;
 
-app.use(express.bodyParser());
+app.use(express.json());
+app.use(express.urlencoded());
 app.use(express.static(__dirname + '/'));
 
 var candleState = 1;
