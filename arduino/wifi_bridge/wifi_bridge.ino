@@ -30,6 +30,8 @@ It might not work on all networks!
 #include <SPI.h>
 #include <string.h>
 #include "utility/debug.h"
+#include <Servo.h>
+
 
 // These are the interrupt and control pins
 #define ADAFRUIT_CC3000_IRQ   3  // MUST be an interrupt pin!
@@ -48,7 +50,8 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 
 // What page to grab!
 #define WEBSITE      "glacial-shore-1996.herokuapp.com"
-#define WEBPAGE      "/android"
+#define WEBPAGE      "/arduino"
+#define CANDLE_OFF   "/candle_off"
 
 
 /**************************************************************************/
@@ -59,13 +62,27 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 /**************************************************************************/
 
 uint32_t ip;
+typedef enum { ON, OFF } CandleState;
+CandleState candleState = ON;
+
+Servo myservo;  // create servo object to control a servo
+                // a maximum of eight servo objects can be created
+
+int pos = 0;    // variable to store the servo position
 
 void setup(void)
 {
   Serial.begin(115200);
+
+  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  pinMode(2,INPUT);
+  pinMode(13,OUTPUT);
   Serial.println(F("Hello, CC3000!\n"));
 
   Serial.print("Free RAM: "); Serial.println(getFreeRam(), DEC);
+
+  // Optional SSID scan
+  // listSSIDResults();
 
   /* Initialise the module */
   Serial.println(F("\nInitializing..."));
@@ -74,9 +91,6 @@ void setup(void)
     Serial.println(F("Couldn't begin()! Check your wiring?"));
     while(1);
   }
-
-  // Optional SSID scan
-  // listSSIDResults();
 
   if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
     Serial.println(F("Failed!"));
@@ -96,7 +110,6 @@ void setup(void)
   while (! displayConnectionDetails()) {
     delay(1000);
   }
-
   ip = 0;
   // Try looking up the website's IP address
   Serial.print(WEBSITE); Serial.print(F(" -> "));
@@ -109,8 +122,16 @@ void setup(void)
 
   cc3000.printIPdotsRev(ip);
 
-  // Optional: Do a ping test on the website
+}
 
+void loop(void)
+{
+  updateState();
+  delay(500);
+}
+
+void updateState()
+{
   /* Try connecting to the website */
   Adafruit_CC3000_Client www = cc3000.connectTCP(ip, 80);
   if (www.connected()) {
@@ -126,32 +147,65 @@ void setup(void)
     return;
   }
 
-  Serial.println(F("-------------------------------------"));
-
+  char c;
   while (www.connected()) {
     while (www.available()) {
-      char c = www.read();
-      Serial.print(c);
+      c = www.read();
     }
   }
+  Serial.print(F("C is "));
+  Serial.println(c);
+  switch (c) {
+    case '1': 
+      if (candleState != ON) {
+        Serial.print(F("Candle was off, turning it on."));
+        if(pos>=1)
+        {
+          for(; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees
+          {
+            myservo.write(pos);              // tell servo to go to position in variable 'pos'
+            delay(15);                       // waits 15ms for the servo to reach the position
+          }
+        }
+      }
+      candleState = ON;
+      break;
+    case '0':
+      if (candleState != OFF) {
+        Serial.print(F("Candle was on, turning it off."));
+        if(pos<=50)
+        {
+          for(; pos <= 50; pos += 1)  // goes from 0 degrees to 180 degrees
+          {                                  // in steps of 1 degree
+            myservo.write(pos);              // tell servo to go to position in variable 'pos'
+            delay(15);                       // waits 15ms for the servo to reach the position
+          }
+        }
+        //if (www.connected()) {
+        if (false){
+          Serial.println("Turned off, sending data");
+          www.fastrprint(F("GET "));
+          www.fastrprint(CANDLE_OFF);
+          www.fastrprint(F(" HTTP/1.0\r\n"));
+          www.fastrprint(F("Host: ")); www.fastrprint(WEBSITE); www.fastrprint(F("\n"));
+          www.fastrprint(F("Connection: close\n"));
+          www.fastrprint(F("\n"));
+          www.println();
+        }
+      }
+      candleState = OFF;
+      break;
+    default:
+      Serial.println(c);
+      break;
+  }
+
   www.close();
-  Serial.println(F("-------------------------------------"));
 
-  /* You need to make sure to clean up after yourself or the CC3000 can freak out */
-  /* the next time your try to connect ... */
-  Serial.println(F("\n\nDisconnecting"));
-  cc3000.disconnect();
-
-}
-
-void loop(void)
-{
- delay(1000);
-}
-
-int getState()
-{
-  
+  /* You need to make sure to clean up after yourself or the CC3000 can freak out
+     the next time you try to connect ... */
+  //Serial.println(F("\n\nClosing the connection"));
+  // cc3000.disconnect();
 }
 
 /**************************************************************************/
