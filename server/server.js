@@ -24,7 +24,8 @@ app.get('/arduino', function(req, res) {
 });
 
 app.get('/candle_off', function(req, res) {
-  candleOff();
+  candleState=0;
+  sendState();
   res.end();
 });
 
@@ -59,10 +60,6 @@ androidWss.on('connection', function(ws) {
 function candleOff() {
   console.log("Turning candle off");
   if (candleState == 1) {
-    setTimeout(function() {
-      candleState = 0;
-      sendState();
-    }, Math.random() * 1000);
     candleState = 2;
     sendState();
   } else {
