@@ -20,23 +20,11 @@ console.log('http server listening on %d', port);
 
 app.get('/arduino', function(req, res) {
   res.set('Content-Type', 'text');
-  res.send(''+candleState);
+  res.send(''+(candleState == 2 ? 0 : candleState));
 });
 
-app.post('/arduino', function(req, res) {
-  if (! req.body || ! req.body.state) {
-    switch (Number(req.body.state)) {
-      case 0:
-        candleOff();
-        break;
-      case 1:
-        candleOn();
-        break;
-      default:
-        console.log("Received unrecognized message:", req.body.state);
-        break;
-    }
-  }
+app.get('/candle_off', function(req, res) {
+  candleOff();
   res.end();
 });
 
@@ -44,6 +32,9 @@ var androidWss = new WebSocketServer({server: server, path: '/android'});
 console.log('websocket server created');
 androidWss.on('connection', function(ws) {
   console.log('websocket connection open');
+
+  androidClient = ws;
+  sendState();
 
   ws.on('message', function(message) {
     switch (Number(message)) {
@@ -63,8 +54,6 @@ androidWss.on('connection', function(ws) {
     console.log('websocket connection close');
   });
 
-  androidClient = ws;
-  sendState();
 });
 
 function candleOff() {
@@ -85,7 +74,6 @@ function candleOff() {
 function candleOn() {
   console.log("Turning candle on");
   candleState = 1;
-  sendState();
 }
 
 function sendState() {
