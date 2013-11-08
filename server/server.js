@@ -74,6 +74,7 @@ function candleOff() {
 function candleOn() {
   console.log("Turning candle on");
   candleState = 1;
+  sendState();
 }
 
 function sendState() {
