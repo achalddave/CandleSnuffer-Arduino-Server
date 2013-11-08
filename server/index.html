@@ -30,20 +30,21 @@
       ws.onmessage = function (event) {
         var li = document.createElement('li');
         switch(Number(event.data)) {
-           case 0:
-             li.innerHTML = "The candle is off.";
-             break;
-           case 1:
-             li.innerHTML = "The candle is on.";
-             break;
-           case 2:
-             li.innerHTML = "Trying to turn the candle off...";
-             break;
-           default:
-             break;
+          case 0:
+            li.innerHTML = "The candle is off.";
+            break;
+          case 1:
+            li.innerHTML = "The candle is on.";
+            break;
+          case 2:
+            li.innerHTML = "Trying to turn the candle off...";
+            break;
+          default:
+            break;
         };
         document.querySelector('#candle_state').appendChild(li);
       };
+
     </script>
   </head>
   <body>
